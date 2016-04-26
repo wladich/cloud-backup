@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import requests
-
-USER_AGENT = 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.108 Safari/537.36'
+import requests_toolbelt
 
 
 class NotFoundError(Exception):
@@ -109,9 +108,11 @@ class Cloud(object):
         else:
             raise NotFoundError
 
-    def upload_blob(self, s):
+    def upload_blob(self, fd):
         url = self.servers['upload']
-        response = self.session.post(url, params={'cloud_domain': '2'}, files=[('file', ('filename', s))])
+        m = requests_toolbelt.MultipartEncoder(fields={'file': ('filename', fd)})
+        response = self.session.post(url, params={'cloud_domain': '2'}, data=m,
+                                     headers={'Content-Type': m.content_type})
         assert response.status_code == 200, response.status_code
         result = response.text.split(';')
         assert len(result) == 2
@@ -210,8 +211,8 @@ class Cloud(object):
         except NotFoundError:
             return False
 
-    def upload_file(self, path, s):
-        blob = self.upload_blob(s)
+    def upload_file(self, path, fd):
+        blob = self.upload_blob(fd)
         self.api_file_add(path, blob)
 
     def get_file_reader(self, path):
@@ -224,11 +225,10 @@ class Cloud(object):
 if __name__ == '__main__':
     import time
 
+    # cloud = Cloud(login, password)
 
-    cloud = Cloud(login, password)
-
-    f = open('/home/w/tmp/test')
-    print cloud.upload_blob(f.read())
+    # f = open('/home/w/tmp/test')
+    # print cloud.upload_blob(f.read())
     # f = cloud.get_file_reader(u'/Полет.mp4')
     # f = cloud.get_file_reader(u'/Берег.jpg')
     # size = 0
