@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # coding: utf-8
 
 import os
@@ -113,18 +114,17 @@ def upload_file(client, local, dest_dir):
 if __name__ == '__main__':
     import argparse
     import getpass
+    from lib.utils import load_credentials
 
     parser = argparse.ArgumentParser()
     parser.add_argument('src', help='File or directory to upload')
     parser.add_argument('dest_dir', help='Directory to place uploaded files in')
     parser.add_argument('-c', '--credentials', help='File with credentials in form login:passwod')
-
     # parser.add_argument('--delete', help='Delete extraneous remote files')
+
     conf = parser.parse_args()
     if conf.credentials:
-        with open(conf.credentials) as f:
-            s = f.readline().rstrip('\r\n')
-            login, password = s.split(':', )
+        login, password = load_credentials(conf.credentials)
     else:
         print 'Login:'
         login = sys.stdin.readline().rstrip('\n')

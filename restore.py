@@ -1,10 +1,12 @@
+#!/usr/bin/env python
 # coding: utf-8
 import argparse
 import  logging
 import os
 
 import storages
-from lib.backup import utils, encode
+from lib import utils
+from lib.backup import encode
 
 log = logging.getLogger('cloud_backup_restore')
 logging.basicConfig(level=logging.DEBUG)

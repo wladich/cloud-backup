@@ -7,7 +7,8 @@ import sys
 import time
 
 import storages
-from lib.backup import utils, collect, encode
+from lib import utils
+from lib.backup import collect, encode
 
 log = logging.getLogger('cloud_backup.sync')
 logging.basicConfig(level=logging.INFO)

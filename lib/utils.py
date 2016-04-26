@@ -9,3 +9,9 @@ def yaml_type(filename):
     except Exception as e:
         raise argparse.ArgumentTypeError(str(e))
 
+
+def load_credentials(filename):
+    with open(filename) as f:
+        s = f.readline().rstrip('\r\n')
+        login, password = s.split(':', )
+        return login, password
