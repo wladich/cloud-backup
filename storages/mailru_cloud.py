@@ -1,9 +1,8 @@
 # coding: utf-8
-import os
-import filesystem_adapter
 import logging
-from lib import cloudapi
-import utils
+
+import filesystem_adapter
+from lib.mailru_cloud import cloudapi
 
 log = logging.getLogger('cloud_backup_sync.mru_cloud_storage')
 

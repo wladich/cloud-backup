@@ -1,9 +1,10 @@
 # coding: utf-8
 
-from cloudapi import Cloud, NotFoundError
-import sys
 import os
 import progressbar
+import sys
+
+from lib.mailru_cloud.cloudapi import Cloud, NotFoundError
 
 
 def get_recursive_remote_filelist(client, remote_dir):

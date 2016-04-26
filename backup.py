@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 import argparse
-import collect
 import logging
-import storages
-import encode
-import utils
-import time
-import sys
 import os
+import sys
+import time
+
+import storages
+from lib.backup import utils, collect, encode
 
 log = logging.getLogger('cloud_backup.sync')
 logging.basicConfig(level=logging.INFO)
