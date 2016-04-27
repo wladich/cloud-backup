@@ -12,6 +12,7 @@ from lib.backup import collect, encode
 
 log = logging.getLogger('cloud_backup.sync')
 logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('requests.packages.urllib3').setLevel(logging.WARN)
 
 
@@ -42,7 +43,7 @@ def sync_volume(volume_name, volumes_conf, storages_conf, passphrase, dry_run):
     if dry_run:
         log.info('Doing dry run -- nothing will be deleted or uploaded')
     volume = volumes_conf[volume_name]
-    volume_path = volume['path']#.decode('utf-8')
+    volume_path = volume['path']
     exclude_paths = [os.path.join(volume_path, os.path.normpath(p)) for p in volume.get('exclude', [])]
     tree = collect.build_tree(volume_path, exclude=exclude_paths)
     log.debug('Built tree for volume "%s", total size %d bytes' % (volume_name, tree['size']))
@@ -54,7 +55,7 @@ def sync_volume(volume_name, volumes_conf, storages_conf, passphrase, dry_run):
         storage = storages.get_storage(storage_conf['class'], storage_conf['params'])
         remote_key_parts = storage.list_keys(volume_name)
         log.info('Found %d keys in storage', len(remote_key_parts))
-        groups_by_keys = dict((g.fingerprint(), g.paths) for g in groups)
+        groups_by_keys = dict((g.fingerprint(), g) for g in groups)
         assert len(groups_by_keys) == len(groups), 'groups with duplicate keys'
         remote_keys_set = set(remote_key_parts.keys())
         local_keys_set = set(groups_by_keys.keys())
@@ -67,13 +68,13 @@ def sync_volume(volume_name, volumes_conf, storages_conf, passphrase, dry_run):
                 log.debug('Removing key "%s"', key)
                 storage.remove(volume_name, key, remote_key_parts[key])
         keys_to_add = local_keys_set - remote_keys_set
-        log.info('%d keys will be uploaded', len(keys_to_add))
+        total_size = sum(groups_by_keys[k].size for k in keys_to_add)
+        log.info('%d keys will be uploaded, approx. %s', len(keys_to_add), utils.human_format_size(total_size))
         if not dry_run:
             progress = Progress(len(keys_to_add))
             for key in keys_to_add:
-                log.debug('Uploading key "%s"', key)
-                paths = groups_by_keys[key]
-                # encoded = encode.encode_files(paths, volume['path'].decode('utf-8'), passphrase)
+                log.debug('Uploading key "%s", %s', key, utils.human_format_size(groups_by_keys[key].size))
+                paths = groups_by_keys[key].paths
                 encoded = encode.encode_files(paths, volume['path'], passphrase)
                 storage.put(volume_name, key, encoded)
                 progress.update_progress(1)
@@ -84,13 +85,12 @@ def sync_volume(volume_name, volumes_conf, storages_conf, passphrase, dry_run):
 
 
 if __name__ == '__main__':
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-vc', help='volumes config file', metavar='FILE.yaml', required=True, type=utils.yaml_type)
-        parser.add_argument('-sc', help='storages config file', metavar='FILE.yaml', required=True, type=utils.yaml_type)
-        parser.add_argument('-p', help='file with passphrase', metavar='FILE', required=True)
-        parser.add_argument('-n', help='do not change remote storage (no-op)', action='store_true')
-        conf = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-vc', help='volumes config file', metavar='FILE.yaml', required=True, type=utils.yaml_type)
+    parser.add_argument('-sc', help='storages config file', metavar='FILE.yaml', required=True, type=utils.yaml_type)
+    parser.add_argument('-p', help='file with passphrase', metavar='FILE', required=True)
+    parser.add_argument('-n', help='do not change remote storage (no-op)', action='store_true')
+    conf = parser.parse_args()
 
-
-        for volume_name in conf.vc.keys():
-            sync_volume(volume_name, conf.vc, conf.sc, conf.p, conf.n)
+    for volume_name in conf.vc.keys():
+        sync_volume(volume_name, conf.vc, conf.sc, conf.p, conf.n)

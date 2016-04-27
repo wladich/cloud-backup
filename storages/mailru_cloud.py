@@ -13,6 +13,7 @@ class MailruCloud(filesystem_adapter.FilesystemAdapter):
         self.client = cloudapi.Cloud(login, password)
 
     def listdir(self, path):
+        log.debug('Listing directory %s' % path)
         resp = self.client.api_folder(path)
         result = []
         for item in resp['list']:
@@ -31,7 +32,7 @@ class MailruCloud(filesystem_adapter.FilesystemAdapter):
         self.client.api_file_remove(path)
 
     def write_file(self, path, iterator):
-        log.debug('Writing file "%s"', path)
+        log.debug('Uploading file "%s"', path)
         self.client.upload_file(path, ''.join(s for s in iterator))
 
     def get_file_read_iterator(self, path):
