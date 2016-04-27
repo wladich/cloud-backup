@@ -1,6 +1,7 @@
 # coding: utf-8
 import logging
 
+from concurrent.futures import ThreadPoolExecutor
 import filesystem_adapter
 from lib.mailru_cloud import cloudapi
 
@@ -19,6 +20,10 @@ class MailruCloud(filesystem_adapter.FilesystemAdapter):
         for item in resp['list']:
             result.append((item['name'], item['kind']))
         return result
+
+    def listdirs(self, paths):
+        t = ThreadPoolExecutor(8)
+        return t.map(self.listdir, paths)
 
     def exists(self, path):
         return self.client.file_exists(path)

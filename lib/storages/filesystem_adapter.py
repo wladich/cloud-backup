@@ -35,6 +35,9 @@ class FilesystemAdapter(object):
         """
         raise NotImplementedError
 
+    def listdirs(self, paths):
+        return map(self.listdir, paths)
+
     def exists(self, path):
         """
             returns "file", "folder" or False
@@ -86,15 +89,18 @@ class FilesystemAdapter(object):
             return {}
         if exists == 'folder':
             keys_parts = {}
+            bucket_paths = []
             for bucket, kind in self.listdir(volume_path):
                 if kind == 'folder' and re.match('^[0-9a-f]{2}$', bucket):
-                    for name, kind in self.listdir(join_paths(volume_path, bucket)):
-                        if kind == 'file':
-                            m = re.match(r'^([0-9a-f]{40})-([0-9]+)$', name)
-                            if m:
-                                key = m.group(1)
-                                part_n = int(m.group(2))
-                                keys_parts[key] = keys_parts.get(key, []) + [part_n]
+                    bucket_paths.append(join_paths(volume_path, bucket))
+            for dirlist in self.listdirs(bucket_paths):
+                for name, kind in dirlist:
+                    if kind == 'file':
+                        m = re.match(r'^([0-9a-f]{40})-([0-9]+)$', name)
+                        if m:
+                            key = m.group(1)
+                            part_n = int(m.group(2))
+                            keys_parts[key] = keys_parts.get(key, []) + [part_n]
             return keys_parts
         else:
             raise IOError('"%s" is not a directory')
