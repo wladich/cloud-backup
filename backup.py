@@ -79,8 +79,8 @@ def sync_volume(volume_name, volumes_conf, storages_conf, passphrase, dry_run):
                 progress.update_progress(1)
                 print '\r', progress.format(),
                 sys.stdout.flush()
-            print '\n'
             storage.cleanup(volume_name)
+        print '\n'
 
 
 if __name__ == '__main__':
