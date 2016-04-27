@@ -1,7 +1,8 @@
 # coding: utf-8
-import os
-import filesystem_adapter
 import logging
+import os
+
+import filesystem_adapter
 
 log = logging.getLogger('cloud_backup.local_storage')
 

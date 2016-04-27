@@ -6,8 +6,7 @@ import os
 import sys
 import time
 
-import storages
-from lib import utils
+from lib import utils, storages
 from lib.backup import collect, encode
 
 log = logging.getLogger('cloud_backup.sync')

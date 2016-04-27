@@ -4,8 +4,7 @@ import argparse
 import  logging
 import os
 
-import storages
-from lib import utils
+from lib import utils, storages
 from lib.backup import encode
 
 log = logging.getLogger('cloud_backup_restore')
