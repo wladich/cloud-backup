@@ -37,8 +37,10 @@ class Progress(object):
         return '%.1f%% ETA: %s' % (100. * done, eta)
 
 
-def sync_volume(volume_name, volumes_conf, storages_conf, passphrase):
+def sync_volume(volume_name, volumes_conf, storages_conf, passphrase, dry_run):
     log.info('Starting sync volume "%s"' % volume_name)
+    if dry_run:
+        log.info('Doing dry run -- nothing will be deleted or uploaded')
     volume = volumes_conf[volume_name]
     volume_path = volume['path']#.decode('utf-8')
     exclude_paths = [os.path.join(volume_path, os.path.normpath(p)) for p in volume.get('exclude', [])]
@@ -53,29 +55,32 @@ def sync_volume(volume_name, volumes_conf, storages_conf, passphrase):
         remote_key_parts = storage.list_keys(volume_name)
         log.info('Found %d keys in storage', len(remote_key_parts))
         groups_by_keys = dict((g.fingerprint(), g.paths) for g in groups)
+        assert len(groups_by_keys) == len(groups), 'groups with duplicate keys'
         remote_keys_set = set(remote_key_parts.keys())
         local_keys_set = set(groups_by_keys.keys())
         keys_to_delete = remote_keys_set - local_keys_set
         if keys_to_delete == remote_keys_set and len(remote_keys_set) > 3:
             raise Exception('Refusing to delete all %d remote keys' % len(remote_keys_set))
         log.info('%d keys in storage will be deleted', len(keys_to_delete))
-        for key in keys_to_delete:
-            log.debug('Removing key "%s"', key)
-            storage.remove(volume_name, key, remote_key_parts[key])
+        if not dry_run:
+            for key in keys_to_delete:
+                log.debug('Removing key "%s"', key)
+                storage.remove(volume_name, key, remote_key_parts[key])
         keys_to_add = local_keys_set - remote_keys_set
         log.info('%d keys will be uploaded', len(keys_to_add))
-        progress = Progress(len(keys_to_add))
-        for key in keys_to_add:
-            log.debug('Uploading key "%s"', key)
-            paths = groups_by_keys[key]
-            # encoded = encode.encode_files(paths, volume['path'].decode('utf-8'), passphrase)
-            encoded = encode.encode_files(paths, volume['path'], passphrase)
-            storage.put(volume_name, key, encoded)
-            progress.update_progress(1)
-            print '\r', progress.format(),
-            sys.stdout.flush()
-        print '\n'
-        storage.cleanup(volume_name)
+        if not dry_run:
+            progress = Progress(len(keys_to_add))
+            for key in keys_to_add:
+                log.debug('Uploading key "%s"', key)
+                paths = groups_by_keys[key]
+                # encoded = encode.encode_files(paths, volume['path'].decode('utf-8'), passphrase)
+                encoded = encode.encode_files(paths, volume['path'], passphrase)
+                storage.put(volume_name, key, encoded)
+                progress.update_progress(1)
+                print '\r', progress.format(),
+                sys.stdout.flush()
+            print '\n'
+            storage.cleanup(volume_name)
 
 
 if __name__ == '__main__':
@@ -83,8 +88,9 @@ if __name__ == '__main__':
         parser.add_argument('-vc', help='volumes config file', metavar='FILE.yaml', required=True, type=utils.yaml_type)
         parser.add_argument('-sc', help='storages config file', metavar='FILE.yaml', required=True, type=utils.yaml_type)
         parser.add_argument('-p', help='file with passphrase', metavar='FILE', required=True)
+        parser.add_argument('-n', help='do not change remote storage (no-op)', action='store_true')
         conf = parser.parse_args()
 
 
         for volume_name in conf.vc.keys():
-            sync_volume(volume_name, conf.vc, conf.sc, conf.p)
+            sync_volume(volume_name, conf.vc, conf.sc, conf.p, conf.n)
