@@ -67,10 +67,14 @@ def iterate_file_groups(items, size_low_mark, size_high_mark, from_dir):
     group = Group()
     for it in items:
         if it['size'] > size_low_mark:
+            # big directory we want to split on several archives
             if it['size'] > size_high_mark and 'children' in it:
+                first_group = True
                 for g in iterate_file_groups(it['children'], size_low_mark, size_high_mark,
                                              os.path.join(from_dir, it['name'])):
-                    g.add_item(it, from_dir, count_size=False, recurse=False)
+                    if first_group:
+                        g.add_item(it, from_dir, count_size=False, recurse=False)
+                    first_group = False
                     yield g
             else:
                 g = Group()
