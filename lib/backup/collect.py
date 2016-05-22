@@ -30,6 +30,8 @@ def build_tree(directory, exclude):
             child['size'] += st.st_size
         elif stat.S_ISLNK(st.st_mode):
             child['size'] += st.st_size
+        else:
+            continue
         children.append(child)
         directory_size += child['size']
     st = os.stat(directory)
