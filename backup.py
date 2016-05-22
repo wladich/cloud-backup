@@ -62,10 +62,6 @@ def sync_volume(volume_name, volumes_conf, storages_conf, passphrase, dry_run):
         if keys_to_delete == remote_keys_set and len(remote_keys_set) > 3:
             raise Exception('Refusing to delete all %d remote keys' % len(remote_keys_set))
         log.info('%d keys in storage will be deleted', len(keys_to_delete))
-        if not dry_run:
-            for key in keys_to_delete:
-                log.debug('Removing key "%s"', key)
-                storage.remove(volume_name, key, remote_key_parts[key])
         keys_to_add = local_keys_set - remote_keys_set
         total_size = sum(groups_by_keys[k].size for k in keys_to_add)
         log.info('%d keys will be uploaded, approx. %s', len(keys_to_add), utils.human_format_size(total_size))
@@ -79,8 +75,11 @@ def sync_volume(volume_name, volumes_conf, storages_conf, passphrase, dry_run):
                 progress.update_progress(1)
                 print '\r', progress.format(),
                 sys.stdout.flush()
+            print
+            for key in keys_to_delete:
+                log.debug('Removing key "%s"', key)
+                storage.remove(volume_name, key, remote_key_parts[key])
             storage.cleanup(volume_name)
-        print '\n'
 
 
 if __name__ == '__main__':
