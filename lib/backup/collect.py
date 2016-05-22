@@ -70,7 +70,6 @@ def iterate_file_groups(items, size_low_mark, size_high_mark, from_dir):
             if it['size'] > size_high_mark and 'children' in it:
                 for g in iterate_file_groups(it['children'], size_low_mark, size_high_mark,
                                              os.path.join(from_dir, it['name'])):
-                    g.add_item(it, from_dir, count_size=False, recurse=False)
                     yield g
             else:
                 g = Group()
