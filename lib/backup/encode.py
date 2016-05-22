@@ -7,9 +7,10 @@ import tempfile
 def encode_files(paths, root, passphrase):
     with tempfile.NamedTemporaryFile() as paths_list:
         for s in paths:
-            paths_list.write(s.replace('\\', '\\\\') + '\n')
+            s = s.replace('\\', '\\\\')
+            paths_list.write(s + '\x00')
         paths_list.flush()
-        tar = subprocess.Popen(['/bin/tar', 'c', '--no-recursion', '-T', paths_list.name], cwd=root,
+        tar = subprocess.Popen(['/bin/tar', 'c', '--no-recursion', '--null', '-T', paths_list.name], cwd=root,
                                stdout=subprocess.PIPE, stdin=subprocess.PIPE)
 
         gpg = subprocess.Popen(
