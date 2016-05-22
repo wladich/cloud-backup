@@ -47,8 +47,10 @@ class Group(object):
     def add_item(self, item, dir_path, count_size=True, recurse=True):
         path = os.path.join(dir_path, item['name'])
         self.paths.append(path)
-        # self._fingerprint.update('%s|%s|%s' % (path.encode('utf-8'), item['st_size'], item['st_ctime']))
-        self._fingerprint.update('%s|%s|%s' % (path, item['st_size'], item['st_ctime']))
+        if 'children' in item:
+            self._fingerprint.update(path)
+        else:
+            self._fingerprint.update('%s|%s|%s' % (path, item['st_size'], item['st_ctime']))
         if count_size:
             self.size += item['size']
         if 'children' in item and recurse:
